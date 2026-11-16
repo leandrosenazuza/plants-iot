@@ -13,6 +13,11 @@
 #define DHT_TYPE DHT22
 #define TIMEOUT_MS 90000UL
 
+// Leitura bruta do ADC com o sensor no solo seco e no solo encharcado.
+// No sensor capacitivo real o seco costuma ser o maior valor; 0/4095 serve ao potenciometro do Wokwi.
+#define SOIL_DRY 0
+#define SOIL_WET 4095
+
 WebServer server(80);
 DHT dht(DHT_PIN, DHT_TYPE);
 
@@ -52,7 +57,8 @@ void applyTimeout() {
 
 String statusJson() {
   applyTimeout();
-  int umidade = constrain(map(analogRead(SOIL_PIN), 0, 4095, 0, 100), 0, 100);
+  int bruta = analogRead(SOIL_PIN);
+  int umidade = constrain(map(bruta, SOIL_DRY, SOIL_WET, 0, 100), 0, 100);
   bool valid = climateValid();
   if (!valid && pumpOn) {
     setPump(false);
@@ -69,6 +75,8 @@ String statusJson() {
   json += valid ? "true" : "false";
   json += ",\"bombaLigada\":";
   json += pumpOn ? "true" : "false";
+  json += ",\"leituraBruta\":";
+  json += bruta;
   json += "}";
   return json;
 }
